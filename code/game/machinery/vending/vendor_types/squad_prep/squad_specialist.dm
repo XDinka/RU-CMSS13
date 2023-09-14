@@ -6,6 +6,7 @@ GLOBAL_LIST_INIT(cm_vending_gear_spec, list(
 		list("Heavy Grenadier Set", 0, /obj/item/storage/box/spec/heavy_grenadier, MARINE_CAN_BUY_ESSENTIALS, VENDOR_ITEM_REGULAR),
 		list("Pyro Set", 0, /obj/item/storage/box/spec/pyro, MARINE_CAN_BUY_ESSENTIALS, VENDOR_ITEM_REGULAR),
 		list("Scout Set", 0, /obj/item/storage/box/spec/scout, MARINE_CAN_BUY_ESSENTIALS, VENDOR_ITEM_REGULAR),
+		list("Stormtrooper Set", 0, /obj/item/storage/box/spec/st, MARINE_CAN_BUY_ESSENTIALS, VENDOR_ITEM_REGULAR),
 		list("Sniper Set", 0, /obj/item/storage/box/spec/sniper, MARINE_CAN_BUY_ESSENTIALS, VENDOR_ITEM_RECOMMENDED),
 
 		list("EXTRA SCOUT AMMUNITION", 0, null, null, null),
@@ -44,7 +45,7 @@ GLOBAL_LIST_INIT(cm_vending_gear_spec, list(
 		list("Fuel Tank Strap Pouch", 5, /obj/item/storage/pouch/flamertank, null, VENDOR_ITEM_REGULAR),
 		list("Large General Pouch", 10, /obj/item/storage/pouch/general/large, null, VENDOR_ITEM_REGULAR),
 		list("Sling Pouch", 10, /obj/item/storage/pouch/sling, null, VENDOR_ITEM_REGULAR),
-		list("Autoinjector Pouch (Full)", 15, /obj/item/storage/pouch/autoinjector/full, null, VENDOR_ITEM_REGULAR),
+		list("Autoinjector Pouch (Full)", 15, /obj/item/storage/pouch/autoinjector/full/skillless, null, VENDOR_ITEM_REGULAR),
 		list("Motion Detector", 10, /obj/item/device/motiondetector, null, VENDOR_ITEM_REGULAR),
 		list("Machete Pouch (Full)", 15, /obj/item/storage/pouch/machete/full, null, VENDOR_ITEM_REGULAR),
 		list("JTAC Pamphlet", 15, /obj/item/pamphlet/skill/jtac, null, VENDOR_ITEM_REGULAR),

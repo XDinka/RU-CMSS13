@@ -73,7 +73,8 @@ GLOBAL_LIST_INIT(resin_build_order_hivelord, list(
 	/datum/resin_construction/resin_obj/acid_pillar,
 	/datum/resin_construction/resin_obj/sticky_resin,
 	/datum/resin_construction/resin_obj/fast_resin,
-	/datum/resin_construction/resin_obj/resin_spike
+	/datum/resin_construction/resin_obj/resin_spike,
+	/datum/resin_construction/resin_obj/sunken_colony
 ))
 
 GLOBAL_LIST_INIT(resin_build_order_hivelord_whisperer, list(
@@ -83,7 +84,8 @@ GLOBAL_LIST_INIT(resin_build_order_hivelord_whisperer, list(
 	/datum/resin_construction/resin_obj/sticky_resin,
 	/datum/resin_construction/resin_obj/fast_resin,
 	/datum/resin_construction/resin_obj/resin_spike,
-	/datum/resin_construction/resin_obj/resin_node
+	/datum/resin_construction/resin_obj/resin_node,
+	/datum/resin_construction/resin_obj/sunken_colony
 ))
 
 GLOBAL_LIST_INIT(resin_build_order_ovipositor, list(
@@ -94,7 +96,8 @@ GLOBAL_LIST_INIT(resin_build_order_ovipositor, list(
 	/datum/resin_construction/resin_obj/acid_pillar,
 	/datum/resin_construction/resin_obj/sticky_resin,
 	/datum/resin_construction/resin_obj/fast_resin,
-	/datum/resin_construction/resin_obj/resin_spike
+	/datum/resin_construction/resin_obj/resin_spike,
+	/datum/resin_construction/resin_obj/sunken_colony
 ))
 
 //Xeno Leader Mark Meanings
@@ -478,7 +481,8 @@ var/global/list/available_specialist_sets = list(
 			"Sniper Set",
 			"Demolitionist Set",
 			"Heavy Grenadier Set",
-			"Pyro Set"
+			"Pyro Set",
+			"Stormtrooper Set"
 			)
 
 //Similar thing, but used in /obj/item/spec_kit
@@ -488,6 +492,7 @@ var/global/list/available_specialist_kit_boxes = list(
 			"Sniper" = 2,
 			"Scout" = 2,
 			"Demo" = 2,
+			"ST" = 2
 			)
 
 /proc/init_global_referenced_datums()

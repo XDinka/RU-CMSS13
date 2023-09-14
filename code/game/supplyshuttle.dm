@@ -425,6 +425,7 @@ var/datum/controller/supply/supply_controller = new()
 	//dropship part fabricator's points, so we can reference them globally (mostly for DEFCON)
 	var/dropship_points = 10000 //gains roughly 18 points per minute | Original points of 5k doubled due to removal of prespawned ammo.
 	var/tank_points = 0
+	var/mech_points = 5
 
 /datum/controller/supply/New()
 	ordernum = rand(1,9000)
@@ -515,6 +516,64 @@ var/datum/controller/supply/supply_controller = new()
 	for(var/obj/structure/closet/crate/C in area_shuttle)
 		points += points_per_crate
 		qdel(C)
+
+	//Зачем им трупы
+	var/points_per_xeno_t1 = 20
+	var/points_per_xeno_t2 = 40
+	var/points_per_xeno_t3 = 70
+	var/points_per_xeno_q = 150
+	for(var/mob/living/carbon/xenomorph/larva in area_shuttle)
+		points += 6
+		qdel(larva)
+	for(var/mob/living/carbon/xenomorph/carrier in area_shuttle)
+		points += points_per_xeno_t2
+		qdel(carrier)
+	for(var/mob/living/carbon/xenomorph/ravager in area_shuttle)
+		points += points_per_xeno_t3
+		qdel(ravager)
+	for(var/mob/living/carbon/xenomorph/praetorian in area_shuttle)
+		points += points_per_xeno_t3
+		qdel(praetorian)
+	for(var/mob/living/carbon/xenomorph/hivelord in area_shuttle)
+		points += points_per_xeno_t2
+		qdel(hivelord)
+	for(var/mob/living/carbon/xenomorph/defender in area_shuttle)
+		points += points_per_xeno_t1
+		qdel(defender)
+	for(var/mob/living/carbon/xenomorph/warrior in area_shuttle)
+		points += points_per_xeno_t2
+		qdel(warrior)
+	for(var/mob/living/carbon/xenomorph/facehugger in area_shuttle)
+		points += 5
+		qdel(facehugger)
+	for(var/mob/living/carbon/xenomorph/runner in area_shuttle)
+		points += points_per_xeno_t1
+		qdel(runner)
+	for(var/mob/living/carbon/xenomorph/boiler in area_shuttle)
+		points += points_per_xeno_t3
+		qdel(boiler)
+	for(var/mob/living/carbon/xenomorph/crusher in area_shuttle)
+		points += points_per_xeno_t3
+		qdel(crusher)
+	for(var/mob/living/carbon/xenomorph/burrower in area_shuttle)
+		points += points_per_xeno_t2
+		qdel(burrower)
+	for(var/mob/living/carbon/xenomorph/drone in area_shuttle)
+		points += points_per_xeno_t1
+		qdel(drone)
+	for(var/mob/living/carbon/xenomorph/spitter in area_shuttle)
+		points += points_per_xeno_t2
+		qdel(spitter)
+	for(var/mob/living/carbon/xenomorph/sentinel in area_shuttle)
+		points += points_per_xeno_t1
+		qdel(sentinel)
+	for(var/mob/living/carbon/xenomorph/lurker in area_shuttle)
+		points += points_per_xeno_t2
+		qdel(lurker)
+	for(var/mob/living/carbon/xenomorph/queen in area_shuttle)
+		points += points_per_xeno_q
+		qdel(queen) //Квина иди нахуй
+
 
 	// Sell manifests.
 	var/screams = FALSE
@@ -1269,8 +1328,7 @@ var/datum/controller/supply/supply_controller = new()
 	req_access = list(ACCESS_MARINE_CREWMAN)
 	circuit = /obj/item/circuitboard/computer/supplycomp/vehicle
 	// Can only retrieve one vehicle per round
-	var/spent = TRUE
-	var/tank_unlocked = FALSE
+	var/spent = FALSE
 	var/list/allowed_roles = list(JOB_CREWMAN)
 
 	var/list/vehicles
@@ -1279,7 +1337,6 @@ var/datum/controller/supply/supply_controller = new()
 	var/name = "vehicle order"
 
 	var/obj/vehicle/ordered_vehicle
-	var/unlocked = TRUE
 	var/failure_message = "<font color=\"red\"><b>Not enough resources were allocated to repair this vehicle during this operation.</b></font><br>"
 
 /datum/vehicle_order/proc/has_vehicle_lock()
@@ -1292,20 +1349,17 @@ var/datum/controller/supply/supply_controller = new()
 	name = "M34A2 Longstreet Light Tank"
 	ordered_vehicle = /obj/effect/vehicle_spawner/tank/decrepit
 
-/datum/vehicle_order/tank/has_vehicle_lock()
-	return
-
 /datum/vehicle_order/apc
 	name = "M577 Armored Personnel Carrier"
 	ordered_vehicle = /obj/effect/vehicle_spawner/apc/decrepit
 
 /datum/vehicle_order/apc/med
 	name = "M577-MED Armored Personnel Carrier"
-	ordered_vehicle = /obj/effect/vehicle_spawner/apc_med/decrepit
+	ordered_vehicle = /obj/effect/vehicle_spawner/apc/med/decrepit
 
 /datum/vehicle_order/apc/cmd
 	name = "M577-CMD Armored Personnel Carrier"
-	ordered_vehicle = /obj/effect/vehicle_spawner/apc_cmd/decrepit
+	ordered_vehicle = /obj/effect/vehicle_spawner/apc/cmd/decrepit
 
 /obj/structure/machinery/computer/supplycomp/vehicle/Initialize()
 	. = ..()
@@ -1314,10 +1368,11 @@ var/datum/controller/supply/supply_controller = new()
 		/datum/vehicle_order/apc,
 		/datum/vehicle_order/apc/med,
 		/datum/vehicle_order/apc/cmd,
+		/datum/vehicle_order/tank,
 	)
 
 	for(var/order as anything in vehicles)
-		new order
+		vehicles[order] = new order
 
 	if(!VehicleElevatorConsole)
 		VehicleElevatorConsole = src
@@ -1362,12 +1417,12 @@ var/datum/controller/supply/supply_controller = new()
 		dat += "Available vehicles:<br>"
 
 		for(var/d in vehicles)
-			var/datum/vehicle_order/VO = d
+			var/datum/vehicle_order/VO = vehicles[d]
 
 			if(VO.has_vehicle_lock())
 				dat += VO.failure_message
 			else
-				dat += "<a href='?src=\ref[src];get_vehicle=\ref[VO]'>[VO.name]</a><br>"
+				dat += "<a href='?src=\ref[src];get_vehicle=[d]'>[VO.name]</a><br>"
 
 	show_browser(H, dat, "Automated Storage and Retrieval System", "computer", "size=575x450")
 
@@ -1404,7 +1459,7 @@ var/datum/controller/supply/supply_controller = new()
 
 		var/obj/vehicle/multitile/ordered_vehicle
 
-		var/datum/vehicle_order/VO = locate(href_list["get_vehicle"])
+		var/datum/vehicle_order/VO = vehicles[text2path(href_list["get_vehicle"])]
 
 		if(!VO) return
 		if(VO.has_vehicle_lock()) return
@@ -1415,7 +1470,7 @@ var/datum/controller/supply/supply_controller = new()
 
 		VO.on_created(ordered_vehicle)
 
-		SEND_GLOBAL_SIGNAL(COMSIG_GLOB_VEHICLE_ORDERED, ordered_vehicle)
+		SEND_GLOBAL_SIGNAL(COMSIG_GLOB_VEHICLE_ORDERED, VO)
 
 	add_fingerprint(usr)
 	updateUsrDialog()
