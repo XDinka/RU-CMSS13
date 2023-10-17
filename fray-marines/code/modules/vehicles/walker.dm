@@ -213,17 +213,30 @@
 	for(var/ID in list(H.wear_id, H.belt))
 		if(operation_allowed(ID))
 			seats[VEHICLE_DRIVER] = user
-			add_verb(seats[VEHICLE_DRIVER].client, list(
+			add_verb(seats[VEHICLE_DRIVER], list(
 				/obj/vehicle/walker/proc/eject,
 				/obj/vehicle/walker/proc/lights,
 				/obj/vehicle/walker/proc/zoom,
-				/obj/vehicle/walker/proc/select_weapon,
+				/obj/vehicle/walker/proc/cycle_weapons,
 				/obj/vehicle/walker/proc/deploy_magazine,
 				/obj/vehicle/walker/proc/get_stats,
 			))
 			user.loc = src
 			seats[VEHICLE_DRIVER].client.mouse_pointer_icon = file("icons/mecha/mecha_mouse.dmi")
 			seats[VEHICLE_DRIVER].set_interaction(src)
+			to_chat(seats[VEHICLE_DRIVER], SPAN_HELPFUL("Нажмите среднюю кнопку мыши чтобы менять оружие."))
+			to_chat(seats[VEHICLE_DRIVER], SPAN_HELPFUL("Нажмите Shift+MMB для сброса боеприпасов с основного орудия."))
+
+			if (selected) {
+				if (left && left.automatic) {
+					left.register_signals(user)
+				}
+			} else {
+				if (right && right.automatic) {
+					right.register_signals(user)
+				}
+			}
+
 			playsound_client(seats[VEHICLE_DRIVER].client, 'sound/mecha/mecha_start.ogg')
 			update_icon()
 			addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(playsound_client), seats[VEHICLE_DRIVER].client, 'sound/mecha/mecha_online.ogg'), 5 SECONDS)
@@ -261,14 +274,16 @@
 	seats[VEHICLE_DRIVER].unset_interaction()
 	seats[VEHICLE_DRIVER].loc = src.loc
 	seats[VEHICLE_DRIVER].reset_view(null)
-	remove_verb(seats[VEHICLE_DRIVER].client, list(
+	remove_verb(seats[VEHICLE_DRIVER], list(
 				/obj/vehicle/walker/proc/eject,
 				/obj/vehicle/walker/proc/lights,
 				/obj/vehicle/walker/proc/zoom,
-				/obj/vehicle/walker/proc/select_weapon,
+				/obj/vehicle/walker/proc/cycle_weapons,
 				/obj/vehicle/walker/proc/deploy_magazine,
 				/obj/vehicle/walker/proc/get_stats,
 			))
+	left.unregister_signals(seats[VEHICLE_DRIVER])
+	right.unregister_signals(seats[VEHICLE_DRIVER])
 	seats[VEHICLE_DRIVER] = null
 	update_icon()
 	return TRUE
@@ -368,7 +383,7 @@
 	else
 		to_chat(user, "<span class='warning'>RIGHT HARDPOINT IS EMPTY!</span>")
 
-/obj/vehicle/walker/proc/select_weapon()
+/obj/vehicle/walker/proc/cycle_weapons()
 	set name = "Select Weapon"
 	set category = "Vehicle"
 
@@ -385,16 +400,39 @@
 		if(!W.right)
 			return
 		W.selected = !W.selected
+		W.right.register_signals(M)
+		W.left.unregister_signals(M)
 	else
 		if(!W.left)
 			return
 		W.selected = !W.selected
+		W.left.register_signals(M)
+		W.right.unregister_signals(M)
 	to_chat(M, "Selected [W.selected ? "[W.left]" : "[W.right]"]")
 
+/obj/vehicle/walker/proc/handle_click_mods(list/mods)
+	if (mods["middle"] && mods["shift"])
+		deploy_magazine()
+		return TRUE
+	if (mods["middle"])
+		cycle_weapons()
+		return TRUE
+
+	return !mods["left"]
+
 /obj/vehicle/walker/handle_click(mob/living/user, atom/A, list/mods)
+	var/special_click = handle_click_mods(mods)
+
+	if (special_click)
+		return
+
 	if(istype(A, /atom/movable/screen) || A.z != src.z)
 		return
 	if(!firing_arc(A))
+		if (left)
+			SEND_SIGNAL(left, COMSIG_GUN_STOP_FIRE)
+		if (right)
+			SEND_SIGNAL(right, COMSIG_GUN_STOP_FIRE)
 		var/newDir = get_cardinal_dir(src, A)
 		l_move_time = world.time
 		if(dir != newDir)
@@ -405,14 +443,21 @@
 		if(!left)
 			to_chat(usr, "<span class='warning'>WARNING! Hardpoint is empty.</span>")
 			return
-		left.active_effect(A)
+		if (left.automatic)
+			return
+		left.active_effect(A, user)
 	else
 		if(!right)
 			to_chat(usr, "<span class='warning'>WARNING! Hardpoint is empty.</span>")
 			return
-		right.active_effect(A)
+		if (right.automatic)
+			return
+		right.active_effect(A, user)
 
 /obj/vehicle/walker/proc/firing_arc(atom/A)
+	if (!A)
+		return FALSE
+
 	var/turf/T = get_turf(A)
 	var/dx = T.x - x
 	var/dy = T.y - y
@@ -625,25 +670,37 @@
 		to_chat(user, "Someone already reparing this vehicle.")
 		return
 	repair = TRUE
-	var/repair_time = 20 SECONDS
+	var/repair_time = 1 SECONDS
 
-	to_chat(user, "You start repairing broken part of [src.name]'s armor...")
-	if(do_after(user, repair_time, TRUE, 5, BUSY_ICON_BUILD))
-		if(!skillcheck(user, SKILL_ENGINEER, SKILL_ENGINEER_ENGI))
-			to_chat(user, "You haphazardly weld together chunks of broken armor.")
-			health += 100
+	to_chat(user, SPAN_NOTICE("You start repairing broken part of [src.name]'s armor..."))
+	playsound(src.loc, 'sound/items/weldingtool_weld.ogg', 25)
+
+	while (weld.get_fuel() > 1)
+		if(!(world.time % 3))
+			playsound(get_turf(user), 'sound/items/weldingtool_weld.ogg', 25)
+		if(!do_after(user, repair_time, INTERRUPT_ALL, BUSY_ICON_BUILD))
+			break
+		if(!skillcheckexplicit(user, SKILL_ENGINEER, SKILL_ENGINEER_ENGI))
+			to_chat(user, SPAN_NOTICE("You haphazardly weld together chunks of broken armor."))
+			health += 5
 			healthcheck()
 		else
-			health += 250
+			health += 25
 			healthcheck()
-			to_chat(user, "You repair broken part of the armor.")
-		playsound(src.loc, 'sound/items/weldingtool_weld.ogg', 25)
+			to_chat(user, SPAN_NOTICE("You repair broken part of the armor."))
 		if(seats[VEHICLE_DRIVER])
-			to_chat(seats[VEHICLE_DRIVER], "Notification.Armor partly restored.")
-		repair = FALSE
-		return
-	else
-		to_chat(user, "Repair has been interrupted.")
+			to_chat(seats[VEHICLE_DRIVER], SPAN_NOTICE("Notification.Armor partly restored."))
+
+		weld.remove_fuel(1, user)
+
+		if (health >= maxHealth)
+			health = maxHealth
+			to_chat(user, SPAN_NOTICE("You've finished repairing the walker"))
+			break
+
+		if(!weld.isOn())
+			break;
+
 	repair = FALSE
 
 
@@ -720,7 +777,8 @@
 
 		if(health > 0)
 			take_damage(250, "abstract")
-			visible_message(SPAN_DANGER("\The [A] ramms \the [src]!"))
+			visible_message(SPAN_DANGER("\The [A] rams \the [src]!"))
+			Move(get_step(src, A.dir))
 		playsound(loc, 'sound/mecha/mecha_crusher.ogg', 35)
 
 /obj/vehicle/walker/hear_talk(mob/living/M as mob, msg, verb="says", datum/language/speaking, italics = 0)
