@@ -133,14 +133,14 @@
 		if(dir != direction && reverse_dir[dir] != direction)
 			l_move_time = world.time
 			dir = direction
-			pick(playsound(src.loc, 'sound/mecha/powerloader_turn.ogg', 25, 1), playsound(src.loc, 'sound/mecha/powerloader_turn2.ogg', 25, 1))
+			pick(playsound(src.loc, 'sound/mecha/mecha_turn1.ogg', 35, 1), playsound(src.loc, 'sound/mecha/mecha_turn2.ogg', 35, 1), playsound(src.loc, 'sound/mecha/mecha_turn3.ogg', 35, 1), playsound(src.loc, 'sound/mecha/mecha_turn4.ogg', 25, 1))
 			. = TRUE
 		else
 			var/oldDir = dir
 			. = step(src, direction)
 			setDir(oldDir)
 			if(.)
-				pick(playsound(loc, 'sound/mecha/powerloader_step.ogg', 25), playsound(loc, 'sound/mecha/powerloader_step2.ogg', 25))
+				pick(playsound(loc, 'sound/mecha/mecha_step1.ogg', 35), playsound(loc, 'sound/mecha/mecha_step2.ogg', 25), playsound(loc, 'sound/mecha/mecha_step3.ogg', 25), playsound(loc, 'sound/mecha/mecha_step4.ogg', 25), playsound(loc, 'sound/mecha/mecha_step5.ogg', 25))
 
 /obj/vehicle/walker/Bump(atom/obstacle)
 	if(istype(obstacle, /obj/structure/machinery/door))
@@ -155,7 +155,7 @@
 		return
 
 	else if(istype(obstacle, /obj/structure/barricade))
-		pick(playsound(loc, 'sound/mecha/powerloader_step.ogg', 25), playsound(loc, 'sound/mecha/powerloader_step2.ogg', 25))
+		pick(playsound(loc, 'sound/mecha/mecha_jump1.ogg', 25), playsound(loc, 'sound/mecha/mecha_jump2.ogg', 25))
 		var/obj/structure/barricade/cade = obstacle
 		var/new_dir = get_dir(src, cade) ? get_dir(src, cade) : cade.dir
 		var/turf/new_loc = get_step(loc, new_dir)
@@ -224,9 +224,9 @@
 			user.loc = src
 			seats[VEHICLE_DRIVER].client.mouse_pointer_icon = file("icons/mecha/mecha_mouse.dmi")
 			seats[VEHICLE_DRIVER].set_interaction(src)
-			playsound_client(seats[VEHICLE_DRIVER].client, 'sound/mecha/powerup.ogg')
+			playsound_client(seats[VEHICLE_DRIVER].client, 'sound/mecha/mecha_start.ogg')
 			update_icon()
-			addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(playsound_client), seats[VEHICLE_DRIVER].client, 'sound/mecha/nominalsyndi.ogg'), 5 SECONDS)
+			addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(playsound_client), seats[VEHICLE_DRIVER].client, 'sound/mecha/mecha_online.ogg'), 5 SECONDS)
 			return
 
 	to_chat(user, "Access denied.")
@@ -398,7 +398,7 @@
 		var/newDir = get_cardinal_dir(src, A)
 		l_move_time = world.time
 		if(dir != newDir)
-			pick(playsound(src.loc, 'sound/mecha/powerloader_turn.ogg', 25, 1), playsound(src.loc, 'sound/mecha/powerloader_turn2.ogg', 25, 1))
+			pick(playsound(src.loc, 'sound/mecha/mecha_turn1.ogg', 35, 1), playsound(src.loc, 'sound/mecha/mecha_turn2.ogg', 35, 1), playsound(src.loc, 'sound/mecha/mecha_turn3.ogg', 35, 1), playsound(src.loc, 'sound/mecha/mecha_turn4.ogg', 25, 1))
 		dir = newDir
 		return
 	if(selected)
@@ -673,7 +673,7 @@
 	if(health <= 0)
 		move_out()
 		new /obj/structure/walker_wreckage(src.loc)
-		playsound(loc, 'sound/effects/metal_crash.ogg', 75)
+		playsound(loc, 'sound/mecha/mecha_dead.ogg', 75)
 		qdel(src)
 
 /obj/vehicle/walker/bullet_act(obj/projectile/Proj)
@@ -707,7 +707,7 @@
 	health -= damage
 	to_chat(seats[VEHICLE_DRIVER], "<span class='danger'>ALERT! Hostile incursion detected. Chassis taking damage.</span>")
 	if(seats[VEHICLE_DRIVER] && damage >= 50)
-		seats[VEHICLE_DRIVER] << sound('sound/mecha/critdestrsyndi.ogg',volume=50)
+		seats[VEHICLE_DRIVER] << sound('sound/mecha/mecha_alarm.ogg',volume=50)
 	healthcheck()
 
 /obj/vehicle/walker/Collided(atom/A)
@@ -721,7 +721,7 @@
 		if(health > 0)
 			take_damage(250, "abstract")
 			visible_message(SPAN_DANGER("\The [A] ramms \the [src]!"))
-		playsound(loc, 'sound/effects/metal_crash.ogg', 35)
+		playsound(loc, 'sound/mecha/mecha_crusher.ogg', 35)
 
 /obj/vehicle/walker/hear_talk(mob/living/M as mob, msg, verb="says", datum/language/speaking, italics = 0)
 	var/mob/driver = seats[VEHICLE_DRIVER]
